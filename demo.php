@@ -1,81 +1,73 @@
 <?php
 
-    // ------------------- //
-    // --- Idiorm Demo --- //
-    // ------------------- //
+error_reporting(E_ALL | E_STRICT);
 
-    // Note: This is just about the simplest database-driven webapp it's possible to create
-    // and is designed only for the purpose of demonstrating how Idiorm works.
+/*
+ * IdiormConnection + IdiormQuery + IdiormRecord  Demo
+ * 
+ * Note: This is just about the simplest database-driven webapp it's possible to create
+ * and is designed only for the purpose of demonstrating how Idiorm works.
+ * 
+ * The ContactOrm is an example how a special IdiormRecord might look like.
+ * 
+ * In case it's not obvious: this is not the correct way to build web applications!
+ */
 
-    // In case it's not obvious: this is not the correct way to build web applications!
+require_once("./IdiormConnection.class.php");
+require_once("./IdiormQuery.class.php");
+require_once("./IdiormRecord.class.php");
+require_once("./ContactOrm.class.php");
 
-    // Require the idiorm file
-    require_once("idiorm.php");
+$connection = new IdiormConnection();
+$connection->configure('sqlite:./dbs/demo.sqlite');
 
-    // Connect to the demo database file
-    ORM::configure('sqlite:./demo.sqlite');
+echo "<pre>";
 
-    // This grabs the raw database connection from the ORM
-    // class and creates the table if it doesn't already exist.
-    // Wouldn't normally be needed if the table is already there.
-    $db = ORM::get_db();
-    $db->exec("
-        CREATE TABLE IF NOT EXISTS contact (
-            id INTEGER PRIMARY KEY, 
-            name TEXT, 
-            email TEXT 
-        );"
-    );
+// This grabs the raw database connection from the ORM
+// class and creates the table if it doesn't already exist.
+// Wouldn't normally be needed if the table is already there.
+$db = $connection->get_db();
+$db->exec("
+    CREATE TABLE IF NOT EXISTS contact (
+        id INTEGER PRIMARY KEY, 
+        name TEXT, 
+        email TEXT 
+    );"
+);
 
-    // Handle POST submission
-    if (!empty($_POST)) {
-        
-        // Create a new contact object
-        $contact = ORM::for_table('contact')->create();
+$record = $connection->createRecord('contact');
+$record->name = 'Testi';
+$record->save();
 
-        // SHOULD BE MORE ERROR CHECKING HERE!
+$record = $connection->createRecord('ContactOrm');
+$record->setName('Tester2');
+$record->setEmail('Tester2@example.org');
+$record->save();
 
-        // Set the properties of the object
-        $contact->name = $_POST['name'];
-        $contact->email = $_POST['email'];
+/*
+ * Find ContactOrms
+ */
+$query = $connection->createQuery('ContactOrm');
+$results = $query->where_gt('id', 1)->find_many();
 
-        // Save the object to the database
-        $contact->save();
-        
-        // Redirect to self.
-        header('Location: ' . basename(__FILE__));
-        exit;
-    }
+foreach ($results as $result)
+{
+    echo (get_class($result));
+    print_r($result->as_array());
+}
 
-    // Get a list of all contacts from the database
-    $count = ORM::for_table('contact')->count();
-    $contact_list = ORM::for_table('contact')->find_many();
-?>
 
-<html>
-    <head>
-        <title>Idiorm Demo</title>
-    </head>
+/*
+ * Find contacts as IdormRecord
+ */
+$query = $connection->createQuery('contact');
+$results = $query->find_many();
 
-    <body>
-    
-        <h1>Idiorm Demo</h1>
+foreach ($results as $result)
+{
+    echo (get_class($result));
+    print_r($result->as_array());
+}
 
-        <h2>Contact List (<?php echo $count; ?> contacts)</h2>
-        <ul>
-            <?php foreach ($contact_list as $contact): ?>
-                <li>
-                    <strong><?php echo $contact->name ?></strong>
-                    <a href="mailto:<?php echo $contact->email; ?>"><?php echo $contact->email; ?></a>
-                </li>
-            <?php endforeach; ?>
-        </ul>
 
-        <form method="post" action="">
-            <h2>Add Contact</h2>
-            <p><label for="name">Name:</label> <input type="text" name="name" /></p>
-            <p><label for="email">Email:</label> <input type="email" name="email" /></p>
-            <input type="submit" value="Create" />
-        </form>
-    </body>
-</html>
+echo "done!";

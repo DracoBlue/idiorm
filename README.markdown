@@ -1,5 +1,10 @@
+IdiormConnection+Record+IdiormQuery
+===================================
+
+This is an experimental extended version of idiorm by j4mie. It supports multiple connections, a explicit query object and explicit records to allow type hinting.
+
 Idiorm
-======
+====== 
 
 [http://j4mie.github.com/idiormandparis/](http://j4mie.github.com/idiormandparis/)
 
